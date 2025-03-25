@@ -12,9 +12,6 @@ import (
 )
 
 func RunMigrations() {
-	var migrations []string
-	var completed []string
-
 	db := database.NewMySQLAdapter()
 	conn := db.Connect()
 	defer conn.Close()
@@ -29,19 +26,29 @@ func RunMigrations() {
 
 	sort.Strings(files)
 
-	migrations = readMigrationsMetadata(conn)
+	migrations := readMigrationsMetadata(conn)
+	var completed []string
 
 	var migrationErr error
+
+	tx, err := conn.Begin()
+	if err != nil {
+		fmt.Printf("Error starting transaction: %v\n", err)
+		return
+	}
+
 	for _, file := range files {
 		filename := filepath.Base(file)
-		if !contains(filename, migrations) {
-			fmt.Printf("Running migration %s...\n", filename)
-			if migrationErr = runMigration(conn, file); migrationErr != nil {
-				break
-			}
-
-			completed = append(completed, file)
+		if contains(filename, migrations) {
+			continue
 		}
+
+		fmt.Printf("Running migration %s...\n", filename)
+		if migrationErr = runMigration(tx, file); migrationErr != nil {
+			return
+		}
+
+		completed = append(completed, file)
 	}
 
 	if len(completed) == 0 {
@@ -94,7 +101,7 @@ func readMigrationsMetadata(conn *sql.DB) []string {
 	return migrations
 }
 
-func runMigration(conn *sql.DB, file string) error {
+func runMigration(tx *sql.Tx, file string) error {
 	query, err := filepath.Abs(file)
 	if err != nil {
 		fmt.Printf("Error reading migration file: %v\n", err)
@@ -107,31 +114,19 @@ func runMigration(conn *sql.DB, file string) error {
 		return err
 	}
 
-	transaction, err := conn.Begin()
-	if err != nil {
-		fmt.Printf("Error starting transaction: %v\n", err)
-		return err
-	}
-
-	_, err = transaction.Exec(string(content))
+	_, err = tx.Exec(string(content))
 	if err != nil {
 		fmt.Printf("Error running migration: %v\n", err)
-		transaction.Rollback()
+		tx.Rollback()
 		return err
 	}
 
 	fmt.Printf("Migration %s ran successfully\n", filepath.Base(file))
 
-	_, err = conn.Exec("INSERT INTO migrations (name) VALUES (?)", filepath.Base(file))
+	_, err = tx.Exec("INSERT INTO migrations (name) VALUES (?)", filepath.Base(file))
 	if err != nil {
 		fmt.Printf("Error updating migrations metadata: %v\n", err)
-		transaction.Rollback()
-		return err
-	}
-
-	if err := transaction.Commit(); err != nil {
-		fmt.Printf("Error committing transaction: %v\n", err)
-		transaction.Rollback()
+		tx.Rollback()
 		return err
 	}
 
