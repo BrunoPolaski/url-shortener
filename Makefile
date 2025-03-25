@@ -2,33 +2,17 @@ name ?= DefaultMigration
 
 migration-create:
 	@echo "Creating migration"
-	@touch internal/config/migrations/$(name).go
-
-	@echo "package migrations" > internal/config/migrations/$(name).go
-	
-	@echo "" >> internal/config/migrations/$(name).go
-	
-	@echo "import (" >> internal/config/migrations/$(name).go
-	@echo "	\"database/sql\"" >> internal/config/migrations/$(name).go
-	@echo ")" >> internal/config/migrations/$(name).go
-
-	@echo "" >> internal/config/migrations/$(name).go
-	
-	@echo "type Migration$(name) struct {" >> internal/config/migrations/$(name).go
-	@echo "	Database *sql.DB" >> internal/config/migrations/$(name).go
-	@echo "}" >> internal/config/migrations/$(name).go
-	
-	@echo "" >> internal/config/migrations/$(name).go
-	
-	@echo "func (m *Migration$(name)) Up() error {" >> internal/config/migrations/$(name).go
-	@echo "	return nil // Your code here..." >> internal/config/migrations/$(name).go
-	@echo "}" >> internal/config/migrations/$(name).go
-	
-	@echo "" >> internal/config/migrations/$(name).go
-	
-	@echo "func (m *Migration$(name)) Down() error {" >> internal/config/migrations/$(name).go
-	@echo "	return nil // Your code here..." >> internal/config/migrations/$(name).go
-	@echo "}" >> internal/config/migrations/$(name).go
-
+	$(eval timestamp := $(shell date +%s))
+	@touch internal/config/migrations/$(timestamp)_$(name).sql
 	@echo "Migration file created successfully"
 
+.PHONY: build clean deploy
+
+build:
+	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o bin/main ./main.go
+
+clean:
+	rm -rf ./bin
+
+deploy: clean build
+	sls deploy --verbose

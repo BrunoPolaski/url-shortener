@@ -37,7 +37,7 @@ func (lr *linkRepository) GetByUUID(uuid string) (string, *rest_err.RestErr) {
 }
 
 func (lr *linkRepository) Create(redirect *entities.Redirect) (*entities.Redirect, *rest_err.RestErr) {
-	stmt, err := lr.database.Prepare("INSERT INTO test(uuid, url) VALUES(?, ?)")
+	stmt, err := lr.database.Prepare("INSERT INTO links(uuid, url) VALUES(?, ?)")
 	if err != nil {
 		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to prepare statement: %s", err.Error()))
 	}

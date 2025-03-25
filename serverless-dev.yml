@@ -1,0 +1,23 @@
+service: api-url-redirect-service
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: go1.x
+  region: sa-east-1
+  stage: dev
+
+package:
+  patterns:
+    - '!mysql/**'
+    - '!./**'
+    - ./bin/**
+
+functions:
+  backend:
+    handler: bin/main
+    memorySize: 128
+    timeout: 5
+    events:
+      - httpApi: '*'
