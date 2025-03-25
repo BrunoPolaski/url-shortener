@@ -1,6 +1,9 @@
 package services
 
 import (
+	"net/url"
+
+	"github.com/AdagaDigital/url-redirect-service/internal/domain/entities"
 	"github.com/AdagaDigital/url-redirect-service/internal/domain/repositories"
 	"github.com/AdagaDigital/url-redirect-service/internal/domain/services"
 	"github.com/BrunoPolaski/go-crud/src/configuration/rest_err"
@@ -17,10 +20,32 @@ func NewLinkService(lr repositories.LinkRepository) services.LinkService {
 	}
 }
 
-func (ls *linkService) Redirect(inputUuid string) (string, *rest_err.RestErr) {
-	uuid.Validate(inputUuid)
+func (ls *linkService) Redirect(inputUUID string) (string, *rest_err.RestErr) {
+	if err := uuid.Validate(inputUUID); err != nil {
+		return "", rest_err.NewBadRequestError("invalid uuid")
+	}
+
+	link, err := ls.linkRepository.GetByUUID(inputUUID)
+	if err != nil {
+		return "", err
+	}
+
+	return link, nil
 }
 
-func (ls *linkService) CreateLink(url string) (string, *rest_err.RestErr) {
-	return "", nil
+func (ls *linkService) CreateLink(inputURL string) (string, *rest_err.RestErr) {
+	_, err := url.Parse(inputURL)
+	if err != nil {
+		return "", rest_err.NewBadRequestError("invalid url")
+	}
+
+	uuid := uuid.New().String()
+
+	redirect := entities.NewRedirect(uuid, inputURL)
+	_, restErr := ls.linkRepository.Create(redirect)
+	if restErr != nil {
+		return "", restErr
+	}
+
+	return uuid, nil
 }

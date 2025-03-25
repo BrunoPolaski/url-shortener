@@ -37,5 +37,24 @@ func (lr *linkRepository) GetByUUID(uuid string) (string, *rest_err.RestErr) {
 }
 
 func (lr *linkRepository) Create(redirect *entities.Redirect) (*entities.Redirect, *rest_err.RestErr) {
-	return &entities.Redirect{}, nil // TODO: implement
+	stmt, err := lr.database.Prepare("INSERT INTO test(uuid, url) VALUES(?, ?)")
+	if err != nil {
+		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to prepare statement: %s", err.Error()))
+	}
+
+	defer stmt.Close()
+
+	result, err := stmt.Exec(redirect.UUID, redirect.URL)
+	if err != nil {
+		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to insert to database: %s", err.Error()))
+	}
+
+	rows, err := result.RowsAffected()
+	if rows != 1 {
+		return nil, rest_err.NewInternalServerError("Insert failed for url. Please contact the support team.")
+	} else if err != nil {
+		return nil, rest_err.NewInternalServerError(fmt.Sprintf("Error trying to get rows affected by insert: %s", err.Error()))
+	}
+
+	return redirect, nil
 }

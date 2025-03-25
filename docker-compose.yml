@@ -18,6 +18,20 @@ services:
     networks:
       - test-network
 
+  url-redirect-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    networks:
+      - test-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
 networks:
   test-network:
     driver: bridge

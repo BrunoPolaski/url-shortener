@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/AdagaDigital/url-redirect-service/internal/cmd"
 	"github.com/AdagaDigital/url-redirect-service/internal/config/logger"
 	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/http/routes"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -21,10 +23,12 @@ func main() {
 	logger.Info("Starting application")
 
 	if os.Getenv("ENV") == "local" {
-		r := routes.InitRoutes()
+		engine := gin.Default()
 
-		log.Fatal(http.ListenAndServe(":8080", r))
+		routes.InitRoutes(&engine.RouterGroup)
+
+		log.Fatal(http.ListenAndServe(":8080", engine))
 	}
 
-	lambda.Start(app.Handler)
+	lambda.Start(cmd.Handler)
 }
