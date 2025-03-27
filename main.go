@@ -31,7 +31,7 @@ func main() {
 	if os.Getenv("ENV") == "local" {
 		engine := gin.Default()
 
-		routes.InitRoutes(&engine.RouterGroup)
+		routes.InitRoutes(engine)
 
 		log.Fatal(http.ListenAndServe(":8080", engine))
 	}

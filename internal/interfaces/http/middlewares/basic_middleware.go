@@ -13,6 +13,7 @@ func BasicAuthMiddleware(c *gin.Context) {
 			http.StatusUnauthorized,
 			gin.H{"error": "Unauthorized"},
 		)
+		c.Abort()
 		return
 	}
 
@@ -21,6 +22,7 @@ func BasicAuthMiddleware(c *gin.Context) {
 			http.StatusUnauthorized,
 			gin.H{"error": "Unauthorized"},
 		)
+		c.Abort()
 		return
 	}
 }

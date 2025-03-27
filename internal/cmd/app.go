@@ -34,7 +34,7 @@ func Handler(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyRes
 	rr := http2.NewResponseRecorder()
 
 	engine := gin.Default()
-	routes.InitRoutes(&engine.RouterGroup)
+	routes.InitRoutes(engine)
 	engine.ServeHTTP(rr, httpRequest)
 
 	rr.Headers["Content-Type"] = "application/json"

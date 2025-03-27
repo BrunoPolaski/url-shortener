@@ -15,6 +15,7 @@ func BearerMiddleware(c *gin.Context) {
 	if strings.Contains(c.GetHeader("Authorization"), "Bearer ") {
 		errRest := rest_err.NewBadRequestError("invalid token")
 		c.JSON(errRest.Code, errRest)
+		c.Abort()
 		return
 	}
 
@@ -30,6 +31,7 @@ func BearerMiddleware(c *gin.Context) {
 	if !ok || !parsedToken.Valid {
 		errRest := rest_err.NewUnauthorizedError("invalid token")
 		c.JSON(errRest.Code, errRest)
+		c.Abort()
 		return
 	}
 

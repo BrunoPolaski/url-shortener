@@ -5,11 +5,12 @@ import (
 	"github.com/AdagaDigital/url-redirect-service/internal/config/logger"
 	"github.com/AdagaDigital/url-redirect-service/internal/infra/thirdparty/database"
 	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/http/controllers"
+	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/http/middlewares"
 	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/repositories"
 	"github.com/gin-gonic/gin"
 )
 
-func InitRoutes(r *gin.RouterGroup) {
+func InitRoutes(e *gin.Engine) {
 	logger.Info("Setting up routes")
 
 	mysqlAdapter := database.NewMySQLAdapter()
@@ -23,10 +24,15 @@ func InitRoutes(r *gin.RouterGroup) {
 		),
 	)
 
-	r.GET("/health", func(c *gin.Context) {
+	e.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "UP"})
 	})
 
-	r.GET("/redirect/:uuid", controller.Redirect)
-	r.POST("/link", controller.CreateLink)
+	e.GET("/redirect/:uuid", controller.Redirect)
+	e.POST("/link", middlewares.BasicAuthMiddleware, controller.CreateLink)
+
+	e.NoMethod(func(c *gin.Context) {
+		c.JSON(405, gin.H{"error": "Method not allowed"})
+		c.Abort()
+	})
 }
