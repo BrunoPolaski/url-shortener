@@ -7,5 +7,5 @@ import (
 
 type LinkRepository interface {
 	GetByUUID(UUID string) (string, *rest_err.RestErr)
-	Create(redirect *entities.Redirect) (*entities.Redirect, *rest_err.RestErr)
+	Create(redirect entities.Redirect) (entities.Redirect, *rest_err.RestErr)
 }

@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS links (
+    uuid VARCHAR(36) PRIMARY KEY,
+    url TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tenant_id VARCHAR(36) NOT NULL,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(uuid)
+);

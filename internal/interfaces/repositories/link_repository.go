@@ -33,10 +33,16 @@ func (lr *linkRepository) GetByUUID(uuid string) (string, *rest_err.RestErr) {
 		return "", rest_err.NewInternalServerError(fmt.Sprintf("error when trying to query row: %s", err.Error()))
 	}
 
-	return url, nil
+	redirect := entities.NewRedirect(uuid, url)
+
+	if err := redirect.DecryptURL(); err != nil {
+		return "", rest_err.NewInternalServerError(fmt.Sprintf("error when trying to decrypt url: %s", err.Error()))
+	}
+
+	return redirect.GetURL(), nil
 }
 
-func (lr *linkRepository) Create(redirect *entities.Redirect) (*entities.Redirect, *rest_err.RestErr) {
+func (lr *linkRepository) Create(redirect entities.Redirect) (entities.Redirect, *rest_err.RestErr) {
 	stmt, err := lr.database.Prepare("INSERT INTO links(uuid, url) VALUES(?, ?)")
 	if err != nil {
 		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to prepare statement: %s", err.Error()))
@@ -44,7 +50,11 @@ func (lr *linkRepository) Create(redirect *entities.Redirect) (*entities.Redirec
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(redirect.UUID, redirect.URL)
+	if err := redirect.EncryptURL(); err != nil {
+		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to encrypt url: %s", err.Error()))
+	}
+
+	result, err := stmt.Exec(redirect.GetUUID(), redirect.GetURL())
 	if err != nil {
 		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to insert to database: %s", err.Error()))
 	}

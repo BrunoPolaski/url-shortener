@@ -3,6 +3,7 @@ package services
 import (
 	"net/url"
 
+	"github.com/AdagaDigital/url-redirect-service/internal/config/logger"
 	"github.com/AdagaDigital/url-redirect-service/internal/domain/entities"
 	"github.com/AdagaDigital/url-redirect-service/internal/domain/repositories"
 	"github.com/AdagaDigital/url-redirect-service/internal/domain/services"
@@ -34,6 +35,7 @@ func (ls *linkService) Redirect(inputUUID string) (string, *rest_err.RestErr) {
 }
 
 func (ls *linkService) CreateLink(inputURL string) (string, *rest_err.RestErr) {
+	logger.Info("Creating link")
 	_, err := url.Parse(inputURL)
 	if err != nil {
 		return "", rest_err.NewBadRequestError("invalid url")

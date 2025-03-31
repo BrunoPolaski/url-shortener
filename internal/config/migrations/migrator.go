@@ -12,54 +12,23 @@ import (
 )
 
 func RunMigrations() {
+	if os.Getenv("ENV") == "local" {
+		os.Setenv("DB_HOST", "localhost")
+	}
+
 	db := database.NewMySQLAdapter()
 	conn := db.Connect()
 	defer conn.Close()
 
 	fmt.Println("Connected to database")
 
-	files, err := filepath.Glob("internal/config/migrations/*.sql")
-	if err != nil {
-		fmt.Printf("Error reading migration files %v\n", err)
-		return
+	if os.Args[2] == "up" {
+		migrationUp(conn)
+	} else if os.Args[2] == "down" {
+		migrationDown(conn)
+	} else {
+		fmt.Println("Invalid command")
 	}
-
-	sort.Strings(files)
-
-	migrations := readMigrationsMetadata(conn)
-	var completed []string
-
-	var migrationErr error
-
-	tx, err := conn.Begin()
-	if err != nil {
-		fmt.Printf("Error starting transaction: %v\n", err)
-		return
-	}
-
-	for _, file := range files {
-		filename := filepath.Base(file)
-		if contains(filename, migrations) {
-			continue
-		}
-
-		fmt.Printf("Running migration %s...\n", filename)
-		if migrationErr = runMigration(tx, file); migrationErr != nil {
-			return
-		}
-
-		completed = append(completed, file)
-	}
-
-	if len(completed) == 0 {
-		if migrationErr != nil {
-			return
-		}
-		fmt.Printf("\nNo migrations to run!!! XD \n")
-		return
-	}
-
-	fmt.Printf("Completed migrations:\n - %s\n", strings.Join(completed, "\n - "))
 }
 
 func readMigrationsMetadata(conn *sql.DB) []string {
@@ -116,18 +85,33 @@ func runMigration(tx *sql.Tx, file string) error {
 
 	_, err = tx.Exec(string(content))
 	if err != nil {
-		fmt.Printf("Error running migration: %v\n", err)
+		if os.Args[2] == "up" {
+			fmt.Printf("Error running migration: %v\n", err)
+		} else {
+			fmt.Printf("Error rolling back migration: %v\n", err)
+		}
 		tx.Rollback()
 		return err
 	}
 
-	fmt.Printf("Migration %s ran successfully\n", filepath.Base(file))
+	if os.Args[2] == "up" {
+		fmt.Printf("Migration %s ran successfully\n", filepath.Base(file))
 
-	_, err = tx.Exec("INSERT INTO migrations (name) VALUES (?)", filepath.Base(file))
-	if err != nil {
-		fmt.Printf("Error updating migrations metadata: %v\n", err)
-		tx.Rollback()
-		return err
+		_, err = tx.Exec("INSERT INTO migrations (name) VALUES (?)", filepath.Base(file))
+		if err != nil {
+			fmt.Printf("Error updating migrations metadata: %v\n", err)
+			tx.Rollback()
+			return err
+		}
+	} else {
+		_, err = tx.Exec("DELETE FROM migrations WHERE name = ?", filepath.Base(file))
+		if err != nil {
+			fmt.Printf("Error updating migrations metadata: %v\n", err)
+			tx.Rollback()
+			return err
+		}
+
+		fmt.Printf("Migration %s rolled back successfully\n", filepath.Base(file))
 	}
 
 	return nil
@@ -140,4 +124,94 @@ func contains(s string, a []string) bool {
 		}
 	}
 	return false
+}
+
+func migrationUp(conn *sql.DB) {
+	files, err := filepath.Glob("internal/config/migrations/*_up.sql")
+	if err != nil {
+		fmt.Printf("Error reading migration files %v\n", err)
+		return
+	}
+
+	sort.Strings(files)
+
+	migrations := readMigrationsMetadata(conn)
+	var completed []string
+
+	var migrationErr error
+
+	tx, err := conn.Begin()
+	if err != nil {
+		fmt.Printf("Error starting transaction: %v\n", err)
+		return
+	}
+
+	for _, file := range files {
+		filename := filepath.Base(file)
+		if contains(filename, migrations) {
+			continue
+		}
+
+		fmt.Printf("Running migration %s...\n", filename)
+		if migrationErr = runMigration(tx, file); migrationErr != nil {
+			return
+		}
+
+		completed = append(completed, file)
+	}
+
+	if len(completed) == 0 {
+		if migrationErr != nil {
+			return
+		}
+		fmt.Printf("\nNo migrations to run!!! XD \n")
+		return
+	}
+
+	fmt.Printf("Completed migrations:\n - %s\n", strings.Join(completed, "\n - "))
+}
+
+func migrationDown(conn *sql.DB) {
+	files, err := filepath.Glob("internal/config/migrations/*_down.sql")
+	if err != nil {
+		fmt.Printf("Error reading migration files %v\n", err)
+		return
+	}
+
+	sort.Strings(files)
+
+	migrations := readMigrationsMetadata(conn)
+	var completed []string
+
+	var migrationErr error
+
+	tx, err := conn.Begin()
+	if err != nil {
+		fmt.Printf("Error starting transaction: %v\n", err)
+		return
+	}
+
+	for _, file := range files {
+		filename := filepath.Base(file)
+		if !contains(filename, migrations) {
+			continue
+		}
+
+		fmt.Printf("Running migration %s...\n", filename)
+		if migrationErr = runMigration(tx, file); migrationErr != nil {
+			return
+		}
+
+		completed = append(completed, file)
+	}
+
+	if len(completed) == 0 {
+		if migrationErr != nil {
+			return
+		}
+		fmt.Printf("\nNo migrations to run!!! XD \n")
+		return
+	}
+
+	fmt.Printf("Completed migrations:\n - %s\n", strings.Join(completed, "\n - "))
 }

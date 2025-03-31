@@ -29,6 +29,8 @@ func main() {
 	logger.Info("Starting application")
 
 	if os.Getenv("ENV") == "local" {
+		gin.SetMode(gin.ReleaseMode)
+
 		engine := gin.Default()
 
 		routes.InitRoutes(engine)
