@@ -21,11 +21,6 @@ func main() {
 
 	logger.Init()
 
-	if len(os.Args) > 1 && os.Args[1] == "migrate" {
-		cmd.Migrate()
-		return
-	}
-
 	logger.Info("Starting application")
 
 	if os.Getenv("ENV") == "local" {

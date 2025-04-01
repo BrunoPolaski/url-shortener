@@ -17,3 +17,12 @@ clean:
 
 deploy: clean build
 	sls deploy --verbose
+
+migration-up:
+	go run ./internal/config/migrations/migrator.go up
+
+migration-down:
+	go run ./internal/config/migrations/migrator.go down
+
+migration-status:
+	go run ./internal/config/migrations/migrator.go status
