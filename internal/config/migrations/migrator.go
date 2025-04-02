@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -91,20 +92,20 @@ func readMigrationsMetadata(conn *sql.DB) []string {
 func runMigration(tx *sql.Tx, file string) error {
 	query, err := filepath.Abs(file)
 	if err != nil {
-		return fmt.Errorf("error getting absolute path of file %s: %v", file, err)
+		return fmt.Errorf("error getting absolute path of file %s: \n\n%v", file, err)
 	}
 
 	content, err := os.ReadFile(query)
 	if err != nil {
-		return fmt.Errorf("error reading file %s: %v", file, err)
+		return fmt.Errorf("error reading file %s: \n\n%v", file, err)
 	}
 
 	_, err = tx.Exec(string(content))
 	if err != nil {
 		if os.Args[1] == "up" {
-			return fmt.Errorf("error running migration %s: %v", file, err)
+			return fmt.Errorf("error running migration %s: \n\n%v", file, err)
 		} else {
-			return fmt.Errorf("error rolling back migration %s: %v", file, err)
+			return fmt.Errorf("error rolling back migration %s: \n\n%v", file, err)
 		}
 	}
 
@@ -113,12 +114,12 @@ func runMigration(tx *sql.Tx, file string) error {
 
 		_, err = tx.Exec("INSERT INTO migrations (name) VALUES (?)", filepath.Base(file))
 		if err != nil {
-			return fmt.Errorf("error inserting migration %s into database: %v", file, err)
+			return fmt.Errorf("error inserting migration %s into database: \n\n%v", file, err)
 		}
 	} else {
-		_, err = tx.Exec("DELETE FROM migrations WHERE name = ?", filepath.Base(file))
+		_, err = tx.Exec("DELETE FROM migrations WHERE name = ?", filepath.Base(strings.Replace(file, "_down.sql", "_up.sql", 1)))
 		if err != nil {
-			return fmt.Errorf("error deleting migration %s from database: %v", file, err)
+			return fmt.Errorf("error deleting migration %s from database: \n\n%v", file, err)
 		}
 
 		fmt.Printf("Migration %s rolled back successfully\n", filepath.Base(file))
@@ -143,7 +144,7 @@ func migrationUp(conn *sql.DB) {
 		return
 	}
 
-	sort.Strings(files)
+	slices.Sort(files)
 
 	migrations := readMigrationsMetadata(conn)
 	var completed []string
@@ -152,7 +153,7 @@ func migrationUp(conn *sql.DB) {
 
 	tx, err := conn.Begin()
 	if err != nil {
-		fmt.Printf("Error starting transaction: %v\n", err)
+		fmt.Printf("Error starting transaction: \n\n%v\n", err)
 		return
 	}
 
@@ -164,9 +165,9 @@ func migrationUp(conn *sql.DB) {
 
 		fmt.Printf("Running migration %s...\n", filename)
 		if migrationErr = runMigration(tx, file); migrationErr != nil {
-			fmt.Printf("%v\n", migrationErr)
+			redBackground(migrationErr.Error())
 			if err := tx.Rollback(); err != nil {
-				fmt.Printf("Error rolling back transaction: %v\n", err)
+				fmt.Printf("Error rolling back transaction: \n\n%v\n", err)
 			}
 			return
 		}
@@ -175,22 +176,21 @@ func migrationUp(conn *sql.DB) {
 	}
 
 	if len(completed) == 0 {
-		fmt.Printf("\n\033[0;102mNo migrations to run!!! XD \n")
+		greenBackground("No migrations to run!!! XD")
 		return
 	}
 
-	fmt.Println("\n\u001B[32mMigrations ran successfully!!!")
-	fmt.Printf("\033[0;102m Completed migrations:\n - %s\n", strings.Join(completed, "\n - "))
+	greenBackground(fmt.Sprintf("Completed migrations:\n - %s\n", strings.Join(completed, "\n - ")))
 }
 
 func migrationDown(conn *sql.DB) {
 	files, err := filepath.Glob("internal/config/migrations/*_down.sql")
 	if err != nil {
-		fmt.Printf("Error reading migration files %v\n", err)
+		fmt.Printf("Error reading migration files: \n\n%v\n", err)
 		return
 	}
 
-	sort.Strings(files)
+	slices.Sort(files)
 
 	migrations := readMigrationsMetadata(conn)
 	var completed []string
@@ -199,18 +199,25 @@ func migrationDown(conn *sql.DB) {
 
 	tx, err := conn.Begin()
 	if err != nil {
-		fmt.Printf("Error starting transaction: %v\n", err)
+		fmt.Printf("Error starting transaction: \n\n%v\n", err)
 		return
 	}
 
-	for _, file := range files {
-		filename := filepath.Base(file)
-		if !contains(filename, migrations) {
+	for i := len(files) - 1; i >= 0; i-- {
+		file := files[i]
+
+		filename := strings.Replace(file, "_down.sql", "_up.sql", 1)
+
+		if !contains(filepath.Base(filename), migrations) {
 			continue
 		}
 
-		fmt.Printf("Rolling back migration %s...\n", filename)
+		fmt.Printf("Running migration %s...\n", file)
 		if migrationErr = runMigration(tx, file); migrationErr != nil {
+			redBackground(migrationErr.Error())
+			if err := tx.Rollback(); err != nil {
+				fmt.Printf("Error rolling back transaction: \n\n%v\n", err)
+			}
 			return
 		}
 
@@ -221,17 +228,17 @@ func migrationDown(conn *sql.DB) {
 		if migrationErr != nil {
 			return
 		}
-		fmt.Printf("\nNo migrations to roll back!!! XD \n")
+		greenBackground("No migrations to roll back!!! XD")
 		return
 	}
 
-	fmt.Printf("Rolled back migrations:\n - %s\n", strings.Join(completed, "\n - "))
+	greenBackground(fmt.Sprintf("Rolled back migrations:\n - %s\n", strings.Join(completed, "\n - ")))
 }
 
 func migrationStatus(conn *sql.DB) {
 	files, err := filepath.Glob("internal/config/migrations/*_up.sql")
 	if err != nil {
-		fmt.Printf("Error reading migration files %v\n", err)
+		fmt.Printf("Error reading migration files \n\n%v\n", err)
 		return
 	}
 
@@ -253,5 +260,17 @@ func migrationStatus(conn *sql.DB) {
 
 	fmt.Printf("Completed migrations: %d\n", completedCounter)
 	fmt.Printf("Not completed migrations: %d\n", notCompletedCounter)
+	if len(migrations) == 0 {
+		fmt.Printf("You didn't run any migration yet.\n")
+		return
+	}
 	fmt.Printf("Latest version: %s\n", migrations[len(migrations)-1])
+}
+
+func greenBackground(slice ...string) {
+	fmt.Printf("\033[0;102m\n%s\n\033[0m", strings.Join(slice, " "))
+}
+
+func redBackground(slice ...string) {
+	fmt.Printf("\033[0;101m\n%s\n\033[0m", strings.Join(slice, " "))
 }
