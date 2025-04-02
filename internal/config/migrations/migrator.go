@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/AdagaDigital/url-redirect-service/internal/config/logger"
@@ -191,6 +192,16 @@ func migrationDown(conn *sql.DB) {
 	}
 
 	slices.Sort(files)
+	if len(os.Args) > 2 {
+		migrationsToRollback, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			fmt.Printf("Error converting argument to int: \n\n%v\n", err)
+			return
+		}
+		if migrationsToRollback < len(files) {
+			files = files[migrationsToRollback:]
+		}
+	}
 
 	migrations := readMigrationsMetadata(conn)
 	var completed []string

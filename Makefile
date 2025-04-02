@@ -1,6 +1,7 @@
 name ?= DefaultMigration
+timesToDownMigration ?= 1 
 
-migration-create:
+migration-gen:
 	@echo "Creating migration"
 	$(eval timestamp := $(shell date +%s))
 	@touch internal/config/migrations/$(timestamp)_$(name)_down.sql
@@ -18,11 +19,11 @@ clean:
 deploy: clean build
 	sls deploy --verbose
 
-migration-up:
+migration-run:
 	go run ./internal/config/migrations/migrator.go up
 
 migration-down:
-	go run ./internal/config/migrations/migrator.go down
+	go run ./internal/config/migrations/migrator.go down $(timesToDownMigration)
 
 migration-status:
 	go run ./internal/config/migrations/migrator.go status
