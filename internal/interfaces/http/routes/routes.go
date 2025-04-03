@@ -16,7 +16,7 @@ func InitRoutes(e *gin.Engine) {
 	mysqlAdapter := database.NewMySQLAdapter()
 	db := mysqlAdapter.Connect()
 
-	controller := controllers.NewLinkController(
+	linkController := controllers.NewLinkController(
 		services.NewLinkService(
 			repositories.NewLinkRepository(
 				db,
@@ -28,8 +28,16 @@ func InitRoutes(e *gin.Engine) {
 		c.JSON(200, gin.H{"status": "UP"})
 	})
 
-	e.GET("/redirect/:uuid", controller.Redirect)
-	e.POST("/link", middlewares.BasicAuthMiddleware, controller.CreateLink)
+	auth := e.Group("/auth", middlewares.BasicAuthMiddleware, middlewares.ApiKeyMiddleware)
+	{
+		auth.POST("/login")
+	}
+
+	link := e.Group("/link")
+	{
+		link.GET("/redirect/:uuid", linkController.Redirect)
+		link.POST("/link", middlewares.BearerMiddleware, linkController.CreateLink)
+	}
 
 	e.NoMethod(func(c *gin.Context) {
 		c.JSON(405, gin.H{"error": "Method not allowed"})

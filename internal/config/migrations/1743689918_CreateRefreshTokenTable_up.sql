@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS refresh_token (
+    uuid CHAR(36) PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
