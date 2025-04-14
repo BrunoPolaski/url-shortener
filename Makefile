@@ -11,10 +11,10 @@ migration-gen:
 .PHONY: build clean deploy
 
 build:
-	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o bin/bootstrap ./main.go
+	env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bootstrap ./main.go
 
 clean:
-	rm -rf ./bin
+	rm -f bootstrap
 
 deploy: clean build
 	sls deploy --verbose

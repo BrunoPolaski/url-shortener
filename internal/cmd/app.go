@@ -11,12 +11,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Handler(request *events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	if request.Path == "" {
+func Handler(request *events.APIGatewayV2HTTPRequest) (*events.APIGatewayProxyResponse, error) {
+	fmt.Println("event.RawPath:", request.RawPath)
+	fmt.Println("event.RequestContext.Path:", request.RequestContext.HTTP.Path)
+
+	if request.RequestContext.HTTP.Path == "" {
 		return nil, fmt.Errorf("path is required")
 	}
 
-	httpRequest, err := http.NewRequest(request.HTTPMethod, request.Path, strings.NewReader(request.Body))
+	httpRequest, err := http.NewRequest(request.RequestContext.HTTP.Method, request.RequestContext.HTTP.Path, strings.NewReader(request.Body))
 	if err != nil {
 		return nil, err
 	}

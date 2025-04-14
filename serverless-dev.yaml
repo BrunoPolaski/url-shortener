@@ -12,11 +12,12 @@ package:
   patterns:
     - '!mysql/**'
     - '!./**'
-    - ./bin/bootstrap
+    - ./bootstrap
+    - ./.env
 
 functions:
   backend:
-    handler: bin/bootstrap
+    handler: ./bootstrap
     memorySize: 128
     timeout: 5
     events:
