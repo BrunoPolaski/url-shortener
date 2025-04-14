@@ -3,9 +3,9 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/AdagaDigital/url-redirect-service/internal/domain/controllers"
-	"github.com/AdagaDigital/url-redirect-service/internal/domain/controllers/model/request"
-	"github.com/AdagaDigital/url-redirect-service/internal/domain/services"
+	"github.com/AdagaDigital/url-redirect-service/internal/domain/ports/controllers"
+	"github.com/AdagaDigital/url-redirect-service/internal/domain/ports/model/request"
+	"github.com/AdagaDigital/url-redirect-service/internal/domain/ports/services"
 	"github.com/gin-gonic/gin"
 )
 

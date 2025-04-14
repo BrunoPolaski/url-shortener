@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	http2 "github.com/AdagaDigital/url-redirect-service/internal/interfaces/http"
-	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/http/routes"
+	http2 "github.com/AdagaDigital/url-redirect-service/internal/adapters/http"
+	"github.com/AdagaDigital/url-redirect-service/internal/adapters/http/routes"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
 )

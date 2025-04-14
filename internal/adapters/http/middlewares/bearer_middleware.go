@@ -10,6 +10,7 @@ import (
 )
 
 func BearerMiddleware(c *gin.Context) {
+
 	jwtAdapter := internal_jwt.NewJWTAdapter()
 
 	if strings.Contains(c.GetHeader("Authorization"), "Bearer ") {

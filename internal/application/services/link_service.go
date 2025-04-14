@@ -5,8 +5,8 @@ import (
 
 	"github.com/AdagaDigital/url-redirect-service/internal/config/logger"
 	"github.com/AdagaDigital/url-redirect-service/internal/domain/entities"
-	"github.com/AdagaDigital/url-redirect-service/internal/domain/repositories"
-	"github.com/AdagaDigital/url-redirect-service/internal/domain/services"
+	"github.com/AdagaDigital/url-redirect-service/internal/domain/ports/repositories"
+	"github.com/AdagaDigital/url-redirect-service/internal/domain/ports/services"
 	"github.com/BrunoPolaski/go-crud/src/configuration/rest_err"
 	"github.com/google/uuid"
 )

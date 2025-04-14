@@ -1,12 +1,12 @@
 package routes
 
 import (
+	"github.com/AdagaDigital/url-redirect-service/internal/adapters/http/controllers"
+	"github.com/AdagaDigital/url-redirect-service/internal/adapters/http/middlewares"
+	"github.com/AdagaDigital/url-redirect-service/internal/adapters/mysql"
 	"github.com/AdagaDigital/url-redirect-service/internal/application/services"
 	"github.com/AdagaDigital/url-redirect-service/internal/config/logger"
 	"github.com/AdagaDigital/url-redirect-service/internal/infra/thirdparty/database"
-	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/http/controllers"
-	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/http/middlewares"
-	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/repositories"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,7 +18,7 @@ func InitRoutes(e *gin.Engine) {
 
 	linkController := controllers.NewLinkController(
 		services.NewLinkService(
-			repositories.NewLinkRepository(
+			mysql.NewLinkRepositoryMySQL(
 				db,
 			),
 		),

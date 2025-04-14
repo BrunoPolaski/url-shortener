@@ -4,10 +4,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/AdagaDigital/url-redirect-service/internal/adapters/http/routes"
 	"github.com/AdagaDigital/url-redirect-service/internal/cmd"
 	"github.com/AdagaDigital/url-redirect-service/internal/config/logger"
-	"github.com/AdagaDigital/url-redirect-service/internal/interfaces/http/routes"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -17,6 +18,11 @@ func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file. Error: %s", err)
+	}
+
+	if len(os.Args) > 1 && strings.Contains(os.Args[1], "migration") {
+		cmd.Migrate()
+		return
 	}
 
 	logger.Init()

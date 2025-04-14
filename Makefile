@@ -11,7 +11,7 @@ migration-gen:
 .PHONY: build clean deploy
 
 build:
-	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o bin/main ./main.go
+	env GOARCH=amd64 GOOS=linux go build -ldflags="-s -w" -o bin/bootstrap ./main.go
 
 clean:
 	rm -rf ./bin
@@ -20,10 +20,10 @@ deploy: clean build
 	sls deploy --verbose
 
 migration-run:
-	go run ./internal/config/migrations/migrator.go up
+	go run main.go migration-up
 
 migration-down:
-	go run ./internal/config/migrations/migrator.go down $(timesToDownMigration)
+	go run main.go migration-down $(timesToDownMigration)
 
 migration-status:
-	go run ./internal/config/migrations/migrator.go status
+	go run main.go migration-status
