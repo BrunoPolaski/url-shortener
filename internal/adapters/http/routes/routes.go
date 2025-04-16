@@ -24,19 +24,25 @@ func InitRoutes(e *gin.Engine) {
 		),
 	)
 
+	authRepository := mysql.NewAuthRepositoryMySQL(db)
+	authController := controllers.NewAuthController(
+		services.NewAuthService(authRepository),
+	)
+
 	e.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "UP"})
 	})
 
-	auth := e.Group("/auth", middlewares.BasicAuthMiddleware, middlewares.ApiKeyMiddleware)
+	auth := e.Group("/auth")
 	{
-		auth.POST("/login")
+		auth.POST("/login", middlewares.ApiKeyMiddleware(authRepository))
+		auth.POST("/api-key", authController.)
 	}
 
 	link := e.Group("/link")
 	{
 		link.GET("/redirect/:uuid", linkController.Redirect)
-		link.POST("/link", middlewares.BearerMiddleware, linkController.CreateLink)
+		link.POST("/link", middlewares.BearerMiddleware(authRepository), linkController.CreateLink)
 	}
 
 	e.NoMethod(func(c *gin.Context) {

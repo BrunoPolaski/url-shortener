@@ -5,9 +5,11 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
 	"io"
 	"os"
+	"time"
+
+	"github.com/BrunoPolaski/go-crud/src/configuration/rest_err"
 )
 
 type ApiKey interface {
@@ -15,16 +17,19 @@ type ApiKey interface {
 	GetSecret() string
 	SetUUID(uuid string)
 	SetSecret(secret string)
-	EncryptSecret() error
-	DecryptSecret() error
+	EncryptSecret() *rest_err.RestErr
+	DecryptSecret() *rest_err.RestErr
 	GetSlug() string
 	SetSlug(slug string)
+	GetCreatedAt() time.Time
+	SetCreatedAt(createdAt time.Time)
 }
 
 type apiKey struct {
-	uuid   string
-	secret string
-	slug   string
+	uuid      string
+	secret    string
+	slug      string
+	createdAt time.Time
 }
 
 func NewApiKey(uuid string, secret string, slug string) *apiKey {
@@ -59,22 +64,22 @@ func (r *apiKey) SetSlug(slug string) {
 	r.slug = slug
 }
 
-func (r *apiKey) EncryptSecret() error {
+func (r *apiKey) EncryptSecret() *rest_err.RestErr {
 	key := os.Getenv("AES_KEY")
 
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
-		return err
+		return rest_err.NewInternalServerError(err.Error())
 	}
 
 	nonce := make([]byte, 12)
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return err
+		return rest_err.NewInternalServerError(err.Error())
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		return err
+		return rest_err.NewInternalServerError(err.Error())
 	}
 
 	ciphertext := aesGCM.Seal(nonce, nonce, []byte(r.secret), nil)
@@ -84,27 +89,27 @@ func (r *apiKey) EncryptSecret() error {
 	return nil
 }
 
-func (r *apiKey) DecryptSecret() error {
+func (r *apiKey) DecryptSecret() *rest_err.RestErr {
 	key := os.Getenv("AES_KEY")
 
 	data, err := base64.URLEncoding.DecodeString(r.secret)
 	if err != nil {
-		return err
+		return rest_err.NewInternalServerError(err.Error())
 	}
 
 	block, err := aes.NewCipher([]byte(key))
 	if err != nil {
-		return err
+		return rest_err.NewInternalServerError(err.Error())
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		return err
+		return rest_err.NewInternalServerError(err.Error())
 	}
 
 	nonceSize := aesGCM.NonceSize()
 	if len(data) < nonceSize {
-		return errors.New("ciphertext is too short")
+		return rest_err.NewInternalServerError("ciphertext too short")
 	}
 
 	ciphertext := data[nonceSize:]
@@ -112,10 +117,18 @@ func (r *apiKey) DecryptSecret() error {
 
 	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		return err
+		return rest_err.NewInternalServerError(err.Error())
 	}
 
 	r.secret = string(plaintext)
 
 	return nil
+}
+
+func (r *apiKey) GetCreatedAt() time.Time {
+	return r.createdAt
+}
+
+func (r *apiKey) SetCreatedAt(createdAt time.Time) {
+	r.createdAt = createdAt
 }

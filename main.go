@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/AdagaDigital/url-redirect-service/internal/adapters/http/routes"
 	"github.com/AdagaDigital/url-redirect-service/internal/cmd"
@@ -15,7 +16,13 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
+	location, err := time.LoadLocation("America/Sao_Paulo")
+	if err != nil {
+		log.Fatalf("Error loading location: %v", err)
+	}
+	time.Local = location
+
+	err = godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file. Error: %s", err)
 	}

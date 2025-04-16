@@ -10,9 +10,9 @@ type authController struct {
 	authService services.AuthService
 }
 
-func NewAuthController(ls services.AuthService) controllers.AuthController {
+func NewAuthController(as services.AuthService) controllers.AuthController {
 	return &authController{
-		authService: ls,
+		authService: as,
 	}
 }
 

@@ -46,7 +46,7 @@ func (ja *jwtAdapter) GenerateToken(sub string) (string, *rest_err.RestErr) {
 }
 
 func (ja *jwtAdapter) ParseToken(token string) (*jwt.Token, *rest_err.RestErr) {
-	secret := os.Getenv("JWT_EXPIRATION_TIME")
+	secret := os.Getenv("TOKEN_SECRET")
 
 	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); ok {

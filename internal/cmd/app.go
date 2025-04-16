@@ -12,9 +12,6 @@ import (
 )
 
 func Handler(request *events.APIGatewayV2HTTPRequest) (*events.APIGatewayProxyResponse, error) {
-	fmt.Println("event.RawPath:", request.RawPath)
-	fmt.Println("event.RequestContext.Path:", request.RequestContext.HTTP.Path)
-
 	if request.RequestContext.HTTP.Path == "" {
 		return nil, fmt.Errorf("path is required")
 	}
