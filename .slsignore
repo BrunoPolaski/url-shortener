@@ -13,5 +13,5 @@ docker/*
 docs/*
 logs/*
 db/*
-mysql/*
+url_service_db/*
 volume/*

@@ -17,7 +17,6 @@ bin
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-mysql
 go.sum
 .env*
-.env*
+url_service_db
