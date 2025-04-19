@@ -39,7 +39,7 @@ func (lc *linkController) CreateLink(c *gin.Context) {
 	var body request.CreateLink
 	err := c.BindJSON(&body)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "url is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "a correct url is required"})
 		return
 	}
 

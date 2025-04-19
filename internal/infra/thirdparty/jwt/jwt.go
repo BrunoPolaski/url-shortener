@@ -6,6 +6,7 @@ import (
 )
 
 type JWT interface {
-	GenerateToken(uid string) (string, *rest_err.RestErr)
+	GenerateToken(tid, uid string) (string, *rest_err.RestErr)
 	ParseToken(token string) (*jwt.Token, *rest_err.RestErr)
+	TrimPrefix(auth string) (string, *rest_err.RestErr)
 }

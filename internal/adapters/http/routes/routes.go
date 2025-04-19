@@ -34,16 +34,12 @@ func InitRoutes(e *gin.Engine) {
 	})
 
 	auth := e.Group("/auth")
-	{
-		auth.POST("/login", middlewares.ApiKeyMiddleware(authRepository))
-		auth.POST("/api-key", authController.)
-	}
+	auth.POST("/login", middlewares.ApiKeyMiddleware(authRepository), authController.Login)
+	auth.POST("/api-key", authController.CreateApiKey)
 
+	e.GET(":uuid", linkController.Redirect)
 	link := e.Group("/link")
-	{
-		link.GET("/redirect/:uuid", linkController.Redirect)
-		link.POST("/link", middlewares.BearerMiddleware(authRepository), linkController.CreateLink)
-	}
+	link.POST("", middlewares.BearerMiddleware(authRepository), linkController.CreateLink)
 
 	e.NoMethod(func(c *gin.Context) {
 		c.JSON(405, gin.H{"error": "Method not allowed"})

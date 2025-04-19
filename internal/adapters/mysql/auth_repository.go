@@ -51,8 +51,13 @@ func (ar *authRepositoryMySQL) FindApiKey(apiKey string) (entities.ApiKey, *rest
 
 	defer stmt.Close()
 
-	var apiKeyEntity request.ApiKey
-	err = stmt.QueryRow(apiKey).Scan(&apiKeyEntity)
+	apiKeyEntity := request.ApiKey{}
+	err = stmt.QueryRow(apiKey).Scan(
+		&apiKeyEntity.UUID,
+		&apiKeyEntity.Secret,
+		&apiKeyEntity.Slug,
+		&apiKeyEntity.CreatedAt,
+	)
 	if err != nil {
 		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to query row: %s", err.Error()))
 	}
@@ -67,10 +72,6 @@ func (ar *authRepositoryMySQL) CreateApiKey(apiKey entities.ApiKey) (entities.Ap
 	}
 
 	defer stmt.Close()
-
-	if err := apiKey.EncryptSecret(); err != nil {
-		return nil, rest_err.NewInternalServerError(fmt.Sprintf("error when trying to encrypt secret: %s", err.Error()))
-	}
 
 	_, err = stmt.Exec(apiKey.GetUUID(), apiKey.GetSecret(), apiKey.GetSlug())
 	if err != nil {
@@ -111,4 +112,54 @@ func (ar *authRepositoryMySQL) FindTokenByApiKey(apiKey string) (string, *rest_e
 	}
 
 	return tokenUUID, nil
+}
+
+func (ar *authRepositoryMySQL) DeleteTokenByApiKey(apiKey string) *rest_err.RestErr {
+	stmt, err := ar.database.Prepare("DELETE FROM refresh_token WHERE api_key = ?")
+	if err != nil {
+		return rest_err.NewInternalServerError(fmt.Sprintf("error when trying to prepare statement: %s", err.Error()))
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(apiKey)
+	if err != nil {
+		return rest_err.NewInternalServerError(fmt.Sprintf("error when trying to query row: %s", err.Error()))
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return rest_err.NewInternalServerError(fmt.Sprintf("error when trying to watch rows affected: %s", err.Error()))
+	}
+
+	if rowsAffected == 0 {
+		return rest_err.NewNotFoundError("api key refresh token was not found")
+	}
+
+	return nil
+}
+
+func (ar *authRepositoryMySQL) DeleteToken(uuid string) *rest_err.RestErr {
+	stmt, err := ar.database.Prepare("DELETE FROM refresh_token WHERE uuid = ?")
+	if err != nil {
+		return rest_err.NewInternalServerError(fmt.Sprintf("error when trying to prepare statement: %s", err.Error()))
+	}
+
+	defer stmt.Close()
+
+	res, err := stmt.Exec(uuid)
+	if err != nil {
+		return rest_err.NewInternalServerError(fmt.Sprintf("error when trying to query row: %s", err.Error()))
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return rest_err.NewInternalServerError(fmt.Sprintf("error when trying to watch rows affected: %s", err.Error()))
+	}
+
+	if rowsAffected == 0 {
+		return rest_err.NewNotFoundError("api key refresh token was not found")
+	}
+
+	return nil
 }

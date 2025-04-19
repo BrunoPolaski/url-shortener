@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/BrunoPolaski/go-crud/src/configuration/rest_err"
@@ -16,7 +17,7 @@ func NewJWTAdapter() JWT {
 	return &jwtAdapter{}
 }
 
-func (ja *jwtAdapter) GenerateToken(sub string) (string, *rest_err.RestErr) {
+func (ja *jwtAdapter) GenerateToken(tid, sub string) (string, *rest_err.RestErr) {
 	secret := os.Getenv("TOKEN_SECRET")
 	if secret == "" {
 		return "", rest_err.NewInternalServerError("token secret is not set")
@@ -30,6 +31,7 @@ func (ja *jwtAdapter) GenerateToken(sub string) (string, *rest_err.RestErr) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		jwt.MapClaims{
+			"tid": tid,
 			"sub": sub,
 			"iss": os.Getenv("APP_URL"),
 			"exp": time.Now().Add(time.Second * time.Duration(expTime)).Unix(),
@@ -61,4 +63,19 @@ func (ja *jwtAdapter) ParseToken(token string) (*jwt.Token, *rest_err.RestErr) {
 	}
 
 	return parsedToken, nil
+}
+
+func (ja *jwtAdapter) TrimPrefix(auth string) (string, *rest_err.RestErr) {
+	if !strings.Contains(auth, "Bearer ") {
+		return "", rest_err.NewBadRequestError("Unauthorized")
+	}
+
+	parts := strings.Split(auth, " ")
+	if len(parts) != 2 {
+		return "", rest_err.NewUnauthorizedError("malformed authorization header")
+	}
+
+	token := parts[1]
+
+	return token, nil
 }

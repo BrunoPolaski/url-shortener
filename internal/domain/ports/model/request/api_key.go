@@ -2,6 +2,7 @@ package request
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/AdagaDigital/url-redirect-service/internal/domain/entities"
 )
@@ -14,10 +15,13 @@ type ApiKey struct {
 }
 
 func (a *ApiKey) ToDomain() entities.ApiKey {
-	return entities.NewApiKey(
+	createdAt, _ := strconv.Atoi(a.CreatedAt)
+
+	return entities.NewApiKeyWithCreatedAt(
 		a.UUID,
 		a.Secret,
 		a.Slug,
+		time.Unix(int64(createdAt), 0),
 	)
 }
 

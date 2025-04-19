@@ -32,11 +32,20 @@ type apiKey struct {
 	createdAt time.Time
 }
 
-func NewApiKey(uuid string, secret string, slug string) *apiKey {
+func NewApiKey(uuid string, secret string, slug string) ApiKey {
 	return &apiKey{
 		uuid:   uuid,
 		secret: secret,
 		slug:   slug,
+	}
+}
+
+func NewApiKeyWithCreatedAt(uuid string, secret string, slug string, createdAt time.Time) ApiKey {
+	return &apiKey{
+		uuid:      uuid,
+		secret:    secret,
+		slug:      slug,
+		createdAt: createdAt,
 	}
 }
 
