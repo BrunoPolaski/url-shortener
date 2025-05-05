@@ -17,7 +17,7 @@ clean:
 	rm -f bootstrap
 
 deploy: clean build
-	sls deploy --verbose
+	sh proddeploy.sh
 
 deploy-dev: clean build
 	sh devdeploy.sh
