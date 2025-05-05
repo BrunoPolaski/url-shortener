@@ -19,7 +19,7 @@ jobs:
         go-version: '1.24'
 
     - name: Install dependencies
-      run: go mod download
+      run: go mod tidy
 
     - name: Build the project
       run: env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bootstrap ./main.go
