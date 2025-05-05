@@ -1,0 +1,43 @@
+name: Serverless Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24'
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Build the project
+      run: env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bootstrap ./main.go
+
+    - name: Install Serverless and serverless-ignore
+      run: npm install -g serverless serverless-ignore
+
+    - name: Configure serverless.yaml
+      run: rm -rf serverless.yaml && cp serverless-prod.yaml serverless.yaml
+
+    - name: Configure environment vars
+      run: echo "${{ secrets.ENV }}" > .env
+
+    - name: Run migrations
+      run: make migration-run
+
+    - name: Deploy serverless app
+      run: serverless deploy --stage production
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
