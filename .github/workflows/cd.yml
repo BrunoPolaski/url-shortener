@@ -27,7 +27,6 @@ jobs:
         GOARCH: amd64
         GOOS: linux
         CGO_ENABLED: 0
-
     - name: Install Serverless and serverless-ignore
       run: npm install -g serverless serverless-ignore
 
@@ -35,13 +34,15 @@ jobs:
       run: rm -rf serverless.yaml && cp serverless-prod.yaml serverless.yaml
 
     - name: Configure environment vars
-      run: echo "${{ secrets.ENV }}" > .env
+      run: |
+        printf "%s" "${{ secrets.ENV }}" > .env
 
     - name: Run migrations
       run: make migration-run
 
     - name: Deploy serverless app
-      run: serverless deploy --stage production
+      run: serverless deploy --stage prod
       env:
+        SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
