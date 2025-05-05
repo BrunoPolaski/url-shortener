@@ -33,6 +33,7 @@ func Handler(request *events.APIGatewayV2HTTPRequest) (*events.APIGatewayProxyRe
 
 	rr := httptest.NewRecorder()
 
+	gin.SetMode(gin.ReleaseMode)
 	engine := gin.Default()
 	routes.InitRoutes(engine)
 	engine.ServeHTTP(rr, httpRequest)

@@ -37,7 +37,7 @@ func main() {
 	logger.Info("Starting application")
 
 	if os.Getenv("ENV") == "local" {
-		gin.SetMode(gin.ReleaseMode)
+		gin.SetMode(gin.DebugMode)
 
 		engine := gin.Default()
 
