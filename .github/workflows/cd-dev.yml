@@ -22,8 +22,11 @@ jobs:
       run: go mod tidy
 
     - name: Build the project
-      run: env GOARCH=amd64 GOOS=linux CGO_ENABLED=0 go build -ldflags="-s -w" -o ./bootstrap ./main.go
-
+      run: go build -ldflags="-s -w" -o ./bootstrap ./main.go
+      env:
+        GOARCH: amd64
+        GOOS: linux
+        CGO_ENABLED: 0
     - name: Install Serverless and serverless-ignore
       run: npm install -g serverless serverless-ignore
 
