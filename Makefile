@@ -19,6 +19,9 @@ clean:
 deploy: clean build
 	sls deploy --verbose
 
+deploy-dev: clean build
+	sh devdeploy.sh
+
 migration-run:
 	go run main.go migration-up
 

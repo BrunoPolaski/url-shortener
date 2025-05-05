@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 
-	http2 "github.com/AdagaDigital/url-redirect-service/internal/adapters/http"
 	"github.com/AdagaDigital/url-redirect-service/internal/adapters/http/routes"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
@@ -31,18 +31,22 @@ func Handler(request *events.APIGatewayV2HTTPRequest) (*events.APIGatewayProxyRe
 	}
 	httpRequest.URL.RawQuery = q.Encode()
 
-	rr := http2.NewResponseRecorder()
+	rr := httptest.NewRecorder()
 
 	engine := gin.Default()
 	routes.InitRoutes(engine)
 	engine.ServeHTTP(rr, httpRequest)
 
-	rr.Headers["Content-Type"] = "application/json"
-	rr.Headers["Access-Control-Allow-Origin"] = "*"
+	headers := map[string]string{
+		"Access-Control-Allow-Origin": "*",
+	}
+	for k, v := range rr.Header() {
+		headers[k] = strings.Join(v, ",")
+	}
 
 	return &events.APIGatewayProxyResponse{
-		StatusCode: rr.StatusCode,
-		Body:       rr.Body,
-		Headers:    rr.Headers,
+		StatusCode: rr.Code,
+		Body:       rr.Body.String(),
+		Headers:    headers,
 	}, nil
 }
