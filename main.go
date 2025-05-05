@@ -22,7 +22,7 @@ func main() {
 	}
 	time.Local = location
 
-	err = godotenv.Load(".env")
+	err = godotenv.Overload(".env")
 	if err != nil {
 		log.Fatalf("Error loading .env file. Error: %s", err)
 	}
