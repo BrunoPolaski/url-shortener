@@ -37,14 +37,12 @@ jobs:
       run: |
         printf "%s" "${{ secrets.DEV_ENV }}" > .env
 
-    - name: Print to debug
-      run: cat .env
-
     - name: Run migrations
       run: make migration-run
 
     - name: Deploy serverless app
       run: serverless deploy --stage dev
       env:
+        SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
