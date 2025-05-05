@@ -22,6 +22,7 @@ func (m *mySQLAdapter) Connect() *sql.DB {
 	dbPort := os.Getenv("DB_PORT")
 	dbType := os.Getenv("DB_TYPE")
 
+	fmt.Printf("Connecting to database %s://%s:%s@tcp(%s:%s)/%s\n", dbType, dbUser, dbPass, dbHost, dbPort, dbName)
 	db, err := sql.Open(dbType, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName))
 	if err != nil {
 		panic(err.Error())
